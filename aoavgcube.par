@@ -1,0 +1,7 @@
+# name,type,mode,default,min,max,prompt
+cubefile,s,q,"yourcube.fits",,,"Path to a FITS file with a data cube in the first extension"
+outfile,s,q,"recombined_cube.fits",,,"Name of output file"
+newexposure,r,q,1.0,,,"New exposure time (seconds)"
+fromidx,i,h,1,,,"Frame number (1-indexed) at which to start combining"
+toidx,i,h,-1,,,"Frame number (1-indexed) at which to end combining (if < fromidx, use whole cube)"
+mode,s,h,"al"

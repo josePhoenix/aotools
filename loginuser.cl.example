@@ -1,0 +1,4 @@
+reset aotools = /Users/josephoenix/Dropbox/Software/Joseph/aotools/
+task aotools.pkg = aotools$aotools.cl
+
+aotools

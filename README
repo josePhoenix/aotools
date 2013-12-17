@@ -1,0 +1,28 @@
+AO Monitoring and Performance Characterization Tools
+Joseph Long, Fall 2013
+
+Tools to work with time-series data from the science camera and more.
+
+INSTALL
+============================
+
+To install and load by default, create a loginuser.cl file (in the folder with 
+your login.cl file) with the following content (lines *between* the dashes):
+
+----
+
+reset aotools = /Users/josephoenix/Dropbox/Software/Joseph/aotools/
+task aotools.pkg = aotools$aotools.cl
+
+aotools
+
+----
+
+Edit the path to point to this folder. Don't forget the trailing slash!
+
+USAGE
+============================
+
+strehlframe -- centroid the star in a frame with imexam, then analyze with strehlframe to get curves of growth and profiles as compared to an ideal PSF (produces plots and text tables)
+
+cubetoframes -- simple tool to turn a range of frames from an Andor movie into a folder of individual FITS frames

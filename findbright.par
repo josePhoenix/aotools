@@ -1,0 +1,5 @@
+# name,type,mode,default,min,max,prompt
+image,s,al,"yourimage.fits",,,"Path to a FITS file to analyze"
+fwhmpsf,r,h,2.5,,,"FWHM in pixels (initial guess)"
+threshold,r,h,20.0,,,"Threshold for detection in sigma"
+mode,s,h,"al"
