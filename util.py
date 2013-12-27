@@ -7,7 +7,6 @@ from aotools.colorama import red, yellow, green, cyan, white
 # TODO: figure out why PyRAF eats output from normal Python logging
 def _args_to_string(*args):
     return u' '.join(a if type(a) in (str, unicode) else repr(a) for a in args)
-    
 
 def debug(*args):
     print white('[DEBUG] ' + _args_to_string(*args))
@@ -96,3 +95,11 @@ def parse_coo_file(filename):
         return arr[numpy.newaxis] # want single row file to behave like rows
     else:
         return arr
+
+def parse_ranges(rangespec):
+    ranges = []
+    for rangestr in rangespec.split(','):
+        a, b = rangestr.split('-')
+        ranges.append((int(a), int(b)))
+    debug("splitting frames from ranges:", ranges)
+    return ranges

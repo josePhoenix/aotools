@@ -5,6 +5,10 @@ import os
 import numpy as np
 import tempfile
 import shutil
+import scipy.ndimage
+import matplotlib
+matplotlib.use('agg') # cannot import pyplot within pyraf without this
+from matplotlib import pyplot as plt
 # why won't logging work in PyRAF :(
 from aotools.util import debug, info, warn, error, parse_coo_file
 
@@ -175,6 +179,29 @@ def first_min_from_core(psf):
             debug("turning point at radius {0}px (row[{1}] = {2} < row[{3}] = {4})".format(i - dim/2, i, row[i], i + 1, row[i + 1]))
             return i
 
+def compute_psf_scale(dimension, primary, secondary, f_number, lambda_mean, pixel_scale):
+    # set the scaling for the PSF from the first min of the unobscured PSF
+    unscaled_psf = generate_psf_full(dimension, primary, 0)
+    first_min_px = first_min_from_core(unscaled_psf)
+    first_min_radius = first_min_px - dimension/2
+    plate_scale_mm = 206265.0 / (1000 * f_number) # TODO: 1000 mm primary hardcoded
+    plate_scale_px = plate_scale_mm * pixel_scale # 13 micron pixels on Andor
+    theta = math.asin(1.22 * (lambda_mean / 1.0e9)) # TODO: 1e9 nm for our 1m primary
+    theta_arcseconds = theta * 206265.0
+    min_radius_real = theta_arcseconds * (1.0 / plate_scale_px) # pixel radius to first min
+    scale_to_physical = min_radius_real / first_min_radius
+    return scale_to_physical, plate_scale_px, min_radius_real
+
+def generate_scaled_psf(dimension, primary, secondary, scale_to_physical):
+    # regenerate the PSF with obscuration in the aperture
+    unscaled_psf_obscured = generate_psf_full(dimension, primary, secondary)
+    scaled_psf = scipy.ndimage.zoom(unscaled_psf_obscured, scale_to_physical)
+    scaled_psf_ctr = scipy.ndimage.center_of_mass(scaled_psf)
+    max_aperture_radius = scaled_psf.shape[0] / 2
+    debug("Scaled PSF to", scaled_psf.shape)
+    debug("max aperture radius = ", max_aperture_radius)
+    return scaled_psf, scaled_psf_ctr, max_aperture_radius
+
 class Frame(object):
     """
     Carries around data for a frame we're analyzing and saves us
@@ -275,6 +302,32 @@ def curve_of_growth(frame, max_aperture, step=1, quiet=True):
     
     frame.radii, frame.fluxes, frame.npix = np.array(radii), np.array(fluxes), np.array(npix)
     return frame.radii, frame.fluxes, frame.npix
+
+def plot_with_arcseconds(outfile, radii, real_values, ideal_values, min_radius_real,
+        max_extent_px, plate_scale_px, ylabel="Values at Radius", marker=None):
+
+    # Plot with twinned axis in arcseconds
+    fig, host = plt.subplots()
+
+    plt.plot(radii, real_values, 'r', marker=marker, label="Science Image")
+    plt.plot(radii, ideal_values, 'g', marker=marker, label="Ideal PSF")
+    plt.axvspan(0, min_radius_real, facecolor='g', alpha=0.25)
+
+    plt.ylabel(ylabel)
+    plt.xlabel("Radius (pixels from center)")
+
+    plt.xlim(1, max_extent_px)
+    plt.ylim(0, np.max(ideal_values))
+    xfrom, xto = fig.axes[0].get_xlim()
+    par1 = host.twiny()
+    par1.axes.set_xlabel("Radius (arcseconds from center)")
+    par1.set_xlim((xfrom * plate_scale_px, xto * plate_scale_px))
+    par1.grid()
+    host.legend(loc=4)
+    
+    plt.savefig(outfile)
+    debug("saved plot to", outfile)
+    
 
 def profile_from_growthcurve(frame):
     """

@@ -1,9 +1,8 @@
 import tempfile
 import shutil
-from aotools.util import debug, info, warn, error, combine_cube_frames, ensure_dir
+from aotools.util import debug, info, warn, error, combine_cube_frames, ensure_dir, parse_ranges
 import os.path
 from pyraf import iraf
-
 
 def split_frames(cubefile, range_pairs, target_dir):
     dirname, filename = os.path.split(cubefile)
@@ -47,11 +46,7 @@ def split_frames(cubefile, range_pairs, target_dir):
     return outfiles
 
 def cubetoframes(cubefile, rangespec='', clobber=False):
-    ranges = []
-    for rangestr in rangespec.split(','):
-        a, b = rangestr.split('-')
-        ranges.append((int(a), int(b)))
-    debug("splitting frames from ranges:", ranges)
+    ranges = parse_ranges(rangespec)
     path, filename = os.path.split(cubefile)
     filebase = cubefile.rsplit('.', 1)[0]
 
@@ -63,6 +58,7 @@ def cubetoframes(cubefile, rangespec='', clobber=False):
             shutil.rmtree(target_dir)
         else:
             error("target dir exists (remove dir or set clobber=True)", target_dir)
+            raise RuntimeError("target dir exists (remove dir or set clobber=True)")
     ensure_dir(target_dir)
     outimgs = split_frames(cubefile, ranges, target_dir)
     debug("made outimgs", outimgs)
