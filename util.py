@@ -101,5 +101,5 @@ def parse_ranges(rangespec):
     for rangestr in rangespec.split(','):
         a, b = rangestr.split('-')
         ranges.append((int(a), int(b)))
-    debug("splitting frames from ranges:", ranges)
+    debug("ranges:", ranges)
     return ranges

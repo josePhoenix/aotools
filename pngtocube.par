@@ -1,0 +1,6 @@
+# name,type,mode,default,min,max,prompt
+directory,s,q,".",,,"Directory with grayscale PNG images ('.' for current directory)"
+filepattern,s,q,"target_foo_$i.png",,,"Pattern for image filenames (Use $i for the index)"
+outfile,s,q,"yourimage.fits",,,"Path and filename for destination FITS file"
+exposure,r,q,0.01,,,"Exposure in seconds (to be stored in FITS header)"
+mode,s,h,"al"

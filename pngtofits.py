@@ -1,7 +1,4 @@
 from PIL import Image
-import matplotlib
-matplotlib.use('agg') # cannot import pyplot within pyraf without this
-from matplotlib import pyplot as plt
 import numpy
 import os.path
 from pyraf import iraf
