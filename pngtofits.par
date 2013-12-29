@@ -1,0 +1,4 @@
+# name,type,mode,default,min,max,prompt
+infile,s,q,"yourimage.png",,,"Path to grayscale PNG image"
+exposure,r,q,0.01,,,"Exposure in seconds (to be stored in FITS header)"
+mode,s,h,"al"
