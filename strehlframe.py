@@ -86,6 +86,7 @@ def strehlframe(image, primary, secondary, dimension, f_number, pixel_scale,
     
     write_table("{0}_strehl.dat".format(image_base), (
         ("Pixel Radius", frame.radii),
+        ("Enclosed Pixels", frame.npix),
         ("Image Enclosed Energy (counts)", frame.fluxes),
         ("Ideal Enclosed Energy (counts)", ideal_fluxes),
         ("Strehl Ratio (for peak in this radius)", frame.fluxes / ideal_fluxes),
