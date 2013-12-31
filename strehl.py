@@ -295,7 +295,7 @@ def curve_of_growth(frame, max_aperture, step=1, quiet=True):
     frame.radii, frame.fluxes, frame.npix = np.array(radii), np.array(fluxes), np.array(npix)
     return frame.radii, frame.fluxes, frame.npix
 
-def phot_curve_of_growth(frame, original_filename, max_aperture, step=0.5, quiet=True):
+def phot_curve_of_growth(frame, original_filename, max_aperture, step=0.5, quiet=True, fitsky=True):
     """
     Calculate a curve of growth by integrating flux in circular apertures
     (centered on frame.center) of successively larger radii.
@@ -313,6 +313,16 @@ def phot_curve_of_growth(frame, original_filename, max_aperture, step=0.5, quiet
     
     # initialize the parameters we care about for daophot
     _dao_setup(2.5, 5.0, np.std(frame.data))
+    
+    fitskypars = iraf.noao.digiphot.apphot.fitskypars
+    # do we fit sky? (False for PSF)
+    if fitsky:
+        fitskypars.salgorithm = "centroid"
+        fitskypars.annulus = 25.0
+        fitskypars.dannulus = 10.0
+    else:
+        fitskypars.salgorithm = "constant"
+        fitskypars.skyvalue = 0.0
     
     tmp_target_dir = tempfile.mkdtemp()
     

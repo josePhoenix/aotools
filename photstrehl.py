@@ -63,7 +63,7 @@ def photstrehl(cubefile, rangespec, primary, secondary, dimension, f_number,
     hdu.writeto(psftmpfilename)
     debug("psf FITS file temporarily stored in", psftmpfilename)
     
-    phot_curve_of_growth(psf, psftmpfilename, growth_max, step=growth_step, quiet=quiet)
+    phot_curve_of_growth(psf, psftmpfilename, growth_max, step=growth_step, quiet=quiet, fitsky=False)
     profile_from_growthcurve(psf)
     
     # II: analyze images
@@ -112,7 +112,7 @@ def photstrehl(cubefile, rangespec, primary, secondary, dimension, f_number,
         exclude_from, exclude_to = frame.ybounds(r=int(max_extent_px)) # exclude region of max_extent_px around center of frame
         avgrow_median_subtract(frame, exclude_from, exclude_to)
         debug("median subtracted frame")
-        phot_curve_of_growth(frame, fits_frame, growth_max, step=growth_step, quiet=quiet)
+        phot_curve_of_growth(frame, fits_frame, growth_max, step=growth_step, quiet=quiet, fitsky=True)
         debug("curve of growth generated")
         profile_from_growthcurve(frame)
         debug("profile generated")

@@ -63,7 +63,7 @@ def photstrehlframe(image, primary, secondary, dimension, f_number, pixel_scale,
     debug("psf FITS file temporarily stored in", psftmpfilename)
     
     # precompute CoG and profile to be rescaled later
-    phot_curve_of_growth(psf, psftmpfilename, growth_max, step=growth_step, quiet=quiet)
+    phot_curve_of_growth(psf, psftmpfilename, growth_max, step=growth_step, quiet=quiet, fitsky=False)
     profile_from_growthcurve(psf)
     
     # values and functions to rescale our PSF Frame computed values
@@ -90,7 +90,7 @@ def photstrehlframe(image, primary, secondary, dimension, f_number, pixel_scale,
     exclude_from, exclude_to = frame.ybounds(r=int(max_extent_px)) # exclude region of max_extent_px around center of frame
     avgrow_median_subtract(frame, exclude_from, exclude_to)
     debug("median subtracted frame")
-    phot_curve_of_growth(frame, image, growth_max, step=growth_step, quiet=quiet)
+    phot_curve_of_growth(frame, image, growth_max, step=growth_step, quiet=quiet, fitsky=True)
     debug("curve of growth generated")
     profile_from_growthcurve(frame)
     debug("profile generated")
