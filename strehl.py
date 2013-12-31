@@ -276,14 +276,6 @@ def curve_of_growth(frame, max_aperture, step=1, quiet=True):
     quiet - do not emit a line for each step (default: True)
     """
     radii, fluxes, npix = [], [], []
-    
-    # special-case central pixel
-    # radii.append(1)
-    # fluxes.append(frame.data[frame.center[1]][frame.center[0]])
-    # npix.append(1)
-    # 
-    # debug("central pixel {0} has value {1}".format(frame.center, fluxes[0]))
-    
     current_r = 1
     
     while current_r <= max_aperture:
@@ -299,6 +291,65 @@ def curve_of_growth(frame, max_aperture, step=1, quiet=True):
         fluxes.append(flux)
         npix.append(np.sum(mask))
         current_r += step
+    
+    frame.radii, frame.fluxes, frame.npix = np.array(radii), np.array(fluxes), np.array(npix)
+    return frame.radii, frame.fluxes, frame.npix
+
+def phot_curve_of_growth(frame, original_filename, max_aperture, step=0.5, quiet=True):
+    """
+    Calculate a curve of growth by integrating flux in circular apertures
+    (centered on frame.center) of successively larger radii.
+    
+    This implementation uses the IRAF phot task to handle fractional
+    pixel radii. This means it needs to refer to the original file
+    for the frame.
+    
+    max_aperture - radius in pixels from center where we
+                   stop growing our aperture
+    step - number of pixels to grow radius by (default: 1)
+    quiet - do not emit a line for each step (default: True)
+    """
+    radii, fluxes, npix = np.arange(step, max_aperture, step), [], []
+    
+    # initialize the parameters we care about for daophot
+    _dao_setup(2.5, 5.0, np.std(frame.data))
+    
+    tmp_target_dir = tempfile.mkdtemp()
+    
+    # tell daophot where the star is
+    coopath = os.path.join(tmp_target_dir, 'mysource.coo')
+    with open(coopath, 'w') as f:
+        f.write("{0} {1}\n".format(frame.x, frame.y))
+    
+    outfile = os.path.join(tmp_target_dir, 'growth.mag')
+    photpars = iraf.noao.digiphot.apphot.photpars
+    photpars.apertures = ','.join(map(str, radii))
+    iraf.noao.digiphot.apphot.phot.run(
+        image=original_filename,
+        coords=coopath,
+        output=outfile,
+        interactive=False,
+        verify=False,
+    )
+    #shutil.rmtree(tmp_target_dir)
+    debug("output in", tmp_target_dir)
+    
+    with open(outfile) as f:
+        lines = f.readlines()
+    
+    # magic numbers for daophot output: skip first 79 lines
+    # following lines have this format
+    #N RAPERT   SUM           AREA       FLUX          MAG    MERR   PIER PERROR   \
+    #U scale    counts        pixels     counts        mag    mag    ##   perrors  \
+    #F %-12.2f  %-14.7g       %-11.7g    %-14.7g       %-7.3f %-6.3f %-5d %-9s
+    # (we're only expecting one source in this .mag file so we can be lazy)
+    
+    lines = lines[79:]
+    
+    for line in lines:
+        rapert, sum, area, flux = map(float, line.split()[:4])
+        fluxes.append(flux)
+        npix.append(area)
     
     frame.radii, frame.fluxes, frame.npix = np.array(radii), np.array(fluxes), np.array(npix)
     return frame.radii, frame.fluxes, frame.npix
@@ -353,22 +404,26 @@ def profile_from_growthcurve(frame):
     frame.profile = profile / diff_npix
     return frame.profile
 
-def daofind_brightest(filename, fwhmpsf=2.5, threshold=20.0):
+def _dao_setup(fwhmpsf, threshold, sigma):
     iraf.digiphot(_doprint=0)
     iraf.digiphot.apphot(_doprint=0)
     datapars = iraf.noao.digiphot.apphot.datapars
     findpars = iraf.noao.digiphot.apphot.findpars
     datapars.scale = 1.0
+    datapars.sigma = sigma
     datapars.fwhmpsf = fwhmpsf
-    
-    data = pyfits.getdata(filename)
-    datapars.sigma = np.std(data) # background stddev
     
     # not important for source finding
     datapars.readnoise = 0.0
     datapars.epadu = 1.0
     
     findpars.threshold = threshold # only care about brightest
+
+def daofind_brightest(filename, fwhmpsf=2.5, threshold=20.0):
+    data = pyfits.getdata(filename)
+    sigma = np.std(data) # background stddev
+    
+    _dao_setup(fwhmpsf, threshold, sigma)
     
     tmp_target_dir = tempfile.mkdtemp()
     outfile = os.path.join(tmp_target_dir, 'daofind.coo')
