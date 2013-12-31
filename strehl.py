@@ -318,7 +318,7 @@ def phot_curve_of_growth(frame, original_filename, max_aperture, step=0.5, quiet
     # do we fit sky? (False for PSF)
     if fitsky:
         fitskypars.salgorithm = "centroid"
-        fitskypars.annulus = 25.0
+        fitskypars.annulus = 50.0
         fitskypars.dannulus = 10.0
     else:
         fitskypars.salgorithm = "constant"
