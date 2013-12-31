@@ -38,6 +38,8 @@ def photstrehl(cubefile, rangespec, primary, secondary, dimension, f_number,
         pixel_scale
     )
     
+    info("The radius of the first minimum in physical pixels is", min_radius_real, "px")
+    
     scaled_psf, scaled_psf_ctr, max_aperture_radius = generate_scaled_psf(
         dimension,
         primary,
@@ -47,6 +49,12 @@ def photstrehl(cubefile, rangespec, primary, secondary, dimension, f_number,
     
     # wrap psf in a frame
     psf = Frame(scaled_psf, scaled_psf_ctr)
+    
+    max_extent_px = 2.5 / plate_scale_px # After 2.5" we're almost certainly measuring noise
+    debug("after 2.5'' or", max_extent_px, "px we'll be almost certainly measuring noise")
+    growth_max = max_extent_px + growth_step * 3 # do 3 steps beyond the 2.5" mark
+    assert growth_max < max_aperture_radius, "Curve of Growth won't fit on PSF frame with this max extent"
+    
     # precompute CoG and profile to be rescaled later
     
     # phot CoG needs a FITS file, so write one:
@@ -55,15 +63,13 @@ def photstrehl(cubefile, rangespec, primary, secondary, dimension, f_number,
     hdu.writeto(psftmpfilename)
     debug("psf FITS file temporarily stored in", psftmpfilename)
     
-    phot_curve_of_growth(psf, psftmpfilename, max_aperture_radius, step=growth_step, quiet=quiet)
+    phot_curve_of_growth(psf, psftmpfilename, growth_max, step=growth_step, quiet=quiet)
     profile_from_growthcurve(psf)
     
     # II: analyze images
     
-    # values and functions to rescale our PSF Frame computed values
+    # functions to rescale our PSF Frame computed values
     # to physical counts
-    max_extent_px = 2.5 / plate_scale_px # After 2.5" we're almost certainly measuring noise
-    debug("after 2.5'' or", max_extent_px, "px we're almost certainly measuring noise")
     
     def max_flux(frame):
         """Frame max integrated flux (for a radius less than 2.5'')"""
@@ -106,7 +112,7 @@ def photstrehl(cubefile, rangespec, primary, secondary, dimension, f_number,
         exclude_from, exclude_to = frame.ybounds(r=int(max_extent_px)) # exclude region of max_extent_px around center of frame
         avgrow_median_subtract(frame, exclude_from, exclude_to)
         debug("median subtracted frame")
-        phot_curve_of_growth(frame, fits_frame, max_aperture_radius, step=growth_step, quiet=quiet)
+        phot_curve_of_growth(frame, fits_frame, growth_max, step=growth_step, quiet=quiet)
         debug("curve of growth generated")
         profile_from_growthcurve(frame)
         debug("profile generated")

@@ -63,5 +63,6 @@ def cubetoframes(cubefile, rangespec='', clobber=False):
     outimgs = split_frames(cubefile, ranges, target_dir)
     debug("made outimgs", outimgs)
 
-parfile = iraf.osfn("aotools$cubetoframes.par")
-t = iraf.IrafTaskFactory(taskname="cubetoframes", value=parfile, function=cubetoframes)
+if __name__ == "__builtin__":
+    parfile = iraf.osfn("aotools$cubetoframes.par")
+    t = iraf.IrafTaskFactory(taskname="cubetoframes", value=parfile, function=cubetoframes)
