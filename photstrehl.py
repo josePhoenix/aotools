@@ -21,7 +21,8 @@ from aotools.strehl import (Frame, generate_pupil, generate_circular_mask,
 from aotools.cubetoframes import split_frames
 
 def photstrehl(cubefile, rangespec, primary, secondary, dimension, f_number,
-        pixel_scale, lambda_mean, growth_step, fwhmpsf, threshold, quiet):
+        pixel_scale, lambda_mean, growth_step, find_source, xcenter, ycenter,
+        fwhmpsf, threshold, quiet):
     start_time = time.time()
     info("Started at:", start_time)
     if not os.path.exists(cubefile):
@@ -100,12 +101,18 @@ def photstrehl(cubefile, rangespec, primary, secondary, dimension, f_number,
     strehl_rows = []
     
     for fits_frame in fits_frames:
-        bright = daofind_brightest(fits_frame, fwhmpsf, threshold)
-        center_col, center_row = bright['XCENTER'], bright['YCENTER']
         # this is slightly dumb... parse the frame # out of the filename
         frame_num = int(re.findall(r'\d+', os.path.basename(fits_frame))[0])
-        debug("frame #", frame_num, "has brightest at", center_col, center_row)
-        frame = Frame(pyfits.getdata(fits_frame), (float(center_col), float(center_row)))
+        if find_source:
+            bright = daofind_brightest(fits_frame, fwhmpsf, threshold)
+            center_col, center_row = bright['XCENTER'], bright['YCENTER']
+            debug("frame #", frame_num, "has brightest at", center_col, center_row)
+            center_coords = (float(center_col), float(center_row))
+            frame = Frame(pyfits.getdata(fits_frame), center_coords)
+        else:
+            center_coords = (float(xcenter), float(ycenter))
+            frame = Frame(pyfits.getdata(fits_frame), center_coords)
+        
         debug("loaded frame from", fits_frame)
     
         # subtract median row to handle light/charge leakage biasing measurements
@@ -120,17 +127,19 @@ def photstrehl(cubefile, rangespec, primary, secondary, dimension, f_number,
         # scale psf.fluxes and psf.profile to a max value determined from frame
         ideal_profile, ideal_fluxes = scale_psf_fluxes(frame, psf)
         strehls_for_all_radii = frame.fluxes / ideal_fluxes
-        strehl_rows.append((frame_num, strehls_for_all_radii))
+        strehl_rows.append((frame_num, center_coords, strehls_for_all_radii))
 
     outfile = "{0}_{1}_strehlseries.txt".format(cubefile_base, rangespec)
     debug("writing strehl series to", outfile)
     with open(outfile, 'w') as f:
-        f.write("# columns 2 and up are the pixel radii at which we computed the Strehl ratio")
-        f.write("# frameidx\t")
+        f.write("# columns 2 and up are the pixel radii at which we computed the Strehl ratio\n")
+        f.write("# frameidx\txcenter\tycenter\t")
         f.write('\t'.join(map(str, psf.radii)))
         f.write('\n')
-        for idx, ratios in strehl_rows:
+        for idx, center, ratios in strehl_rows:
             f.write(str(idx))
+            f.write('\t')
+            f.write('\t'.join(map(str, center)))
             f.write('\t')
             f.write('\t'.join(map(str, ratios)))
             f.write('\n')

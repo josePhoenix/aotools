@@ -420,7 +420,7 @@ def _dao_setup(fwhmpsf, threshold, sigma):
     datapars = iraf.noao.digiphot.apphot.datapars
     findpars = iraf.noao.digiphot.apphot.findpars
     datapars.scale = 1.0
-    datapars.sigma = sigma
+    datapars.sigma = sigma * (3.0 / 4.0)
     datapars.fwhmpsf = fwhmpsf
     
     # not important for source finding
@@ -430,6 +430,7 @@ def _dao_setup(fwhmpsf, threshold, sigma):
     findpars.threshold = threshold # only care about brightest
 
 def daofind_brightest(filename, fwhmpsf=2.5, threshold=20.0):
+    debug("finding brightest in", filename)
     data = pyfits.getdata(filename)
     sigma = np.std(data) # background stddev
     
