@@ -16,7 +16,7 @@ def split_frames(cubefile, range_pairs, target_dir):
     for fromidx, toidx in range_pairs:
         for i in range(fromidx, toidx+1):
             infile = cubefile + "[*,*,{0}]".format(i)
-            outfile = '{0}/frame_{1}.fit'.format(target_dir, i)
+            outfile = '{0}/frame_{1:04}.fit'.format(target_dir, i)
             debug("imcopy", infile, outfile)
             iraf.imcopy( # easier to use imcopy and preserve headers than to use pyfits I think
                 input=infile,
