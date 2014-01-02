@@ -1,0 +1,6 @@
+# name,type,mode,default,min,max,prompt
+cubefile,s,q,"yourimage.fits",,,"Path to a FITS frame to analyze"
+outfile,s,q,"yourimage.fits",,,"Path to write the corrected frame to"
+exclude_from,i,h,85,,,"Row at which to begin excluded range"
+exclude_to,i,h,150,,,"Row at which to end excluded range"
+mode,s,h,"al"

@@ -11,4 +11,5 @@ pyexecute("aotools$photstrehl.py",verbose=no)
 pyexecute("aotools$photstrehlframe.py",verbose=no)
 pyexecute("aotools$pngtocube.py",verbose=no)
 pyexecute("aotools$pngtofits.py",verbose=no)
+pyexecute("aotools$removeband.py",verbose=no)
 package aotools
