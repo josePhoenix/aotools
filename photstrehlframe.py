@@ -17,7 +17,7 @@ from aotools.strehl import (Frame, generate_pupil, generate_circular_mask,
 )
 
 def photstrehlframe(image, primary, secondary, dimension, f_number, pixel_scale,
-        lambda_mean, growth_step, find_source, xcenter, ycenter, fwhmpsf,
+        lambda_mean, growth_step, normalize_at, find_source, xcenter, ycenter, fwhmpsf,
         threshold, quiet):
     start_time = time.time()
     info("Started at:", start_time)
@@ -51,8 +51,12 @@ def photstrehlframe(image, primary, secondary, dimension, f_number, pixel_scale,
     # wrap psf in a frame
     psf = Frame(scaled_psf, scaled_psf_ctr)
     
-    max_extent_px = 2.5 / plate_scale_px # After 2.5" we're almost certainly measuring noise
-    debug("after 2.5'' or", max_extent_px, "px we'll be almost certainly measuring noise")
+    if normalize_at != 0:
+        max_extent_px = normalize_at
+        debug("Rescaling to max integrated flux @ r=", max_extent_px, "pixels")
+    else:
+        max_extent_px = 2.5 / plate_scale_px # After 2.5" we're almost certainly measuring noise
+        debug("after 2.5'' or", max_extent_px, "px we'll be almost certainly measuring noise")
     growth_max = max_extent_px + growth_step * 3 # do 3 steps beyond the 2.5" mark
     assert growth_max < max_aperture_radius, "Curve of Growth won't fit on PSF frame with this max extent"
     

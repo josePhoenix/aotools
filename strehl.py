@@ -432,7 +432,7 @@ def _dao_setup(fwhmpsf, threshold, sigma):
 def daofind_brightest(filename, fwhmpsf=2.5, threshold=20.0):
     debug("finding brightest in", filename)
     data = pyfits.getdata(filename)
-    sigma = np.std(data) # background stddev
+    sigma = np.std(data) * 0.75 # background stddev... approximated because we don't know where the star IS yet
     
     _dao_setup(fwhmpsf, threshold, sigma)
     
