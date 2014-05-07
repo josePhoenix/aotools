@@ -1,5 +1,5 @@
 # name,type,mode,default,min,max,prompt
 infile,s,q,"yourcube.fits",,,"Path to FITS cube"
-flatfile,s,q,"medianframe.fits",,,"Path for output FITS file"
+flatfile,s,q,"medianframe.fits",,,"FITS file containing image to divide by"
 outfile,s,q,"yourflatcube.fits",,,"Path to FITS cube output"
 mode,s,h,"al"

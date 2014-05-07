@@ -447,6 +447,20 @@ def daofind_brightest(filename, fwhmpsf=2.5, threshold=20.0):
     )
 
     found_stars = parse_coo_file(outfile)
+    if len(found_stars) == 0:
+        warn("HAX: halving fwhmpsf to try and get a detection")
+        # FIXME: kludge to get AAS 2013 data 
+        _dao_setup(fwhmpsf, threshold / 2.0, sigma)
+        outfile = os.path.join(tmp_target_dir, 'daofind.coo.2')
+    
+        iraf.noao.digiphot.apphot.daofind.run(
+            image=filename,
+            output=outfile,
+            interactive=False,
+            verify=False,
+        )
+        found_stars = parse_coo_file(outfile)
+        
     debug(found_stars)
     found_stars.sort(order=['MAG'])
     brightest = found_stars[0]
